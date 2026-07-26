@@ -63,10 +63,19 @@ jobs:
             echo "- sha256: \`$SHA\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Publish release
+      - name: Publish release (create if missing, otherwise attach the asset)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" "$ZIP_NAME" \
-            --title "${GITHUB_REF_NAME}" \
-            --notes "DCS World plugin ${GITHUB_REF_NAME}. signed=${{ steps.sign.outputs.signed }}. sha256=${{ env.sha256 }}"
+          NOTES="DCS World plugin ${GITHUB_REF_NAME}. signed=${{ steps.sign.outputs.signed }}. sha256=${{ env.sha256 }}"
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            # Release already exists (e.g. published from the GitHub UI, which also created the
+            # tag that triggered this run). Attach/replace the built asset and refresh the notes.
+            echo "Release ${GITHUB_REF_NAME} exists — uploading asset."
+            gh release upload "${GITHUB_REF_NAME}" "$ZIP_NAME" --clobber
+            gh release edit "${GITHUB_REF_NAME}" --notes "$NOTES"
+          else
+            gh release create "${GITHUB_REF_NAME}" "$ZIP_NAME" \
+              --title "${GITHUB_REF_NAME}" \
+              --notes "$NOTES"
+          fi
