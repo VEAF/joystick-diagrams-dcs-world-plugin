@@ -18,10 +18,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libegl1 libxkbcommon0 libgl1
 
-      - name: Install plugin + dev/SDK dependencies
+      - name: Install host (Joystick Diagrams SDK the plugin imports)
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+          pip install "joystick-diagrams @ git+https://github.com/Rexeh/joystick-diagrams@master"
+
+      - name: Install plugin + dev dependencies
+        run: pip install -e ".[dev]"
 
       - name: Ruff
         run: ruff check .

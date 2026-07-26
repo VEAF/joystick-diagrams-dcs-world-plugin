@@ -18,13 +18,14 @@ Repository = "https://github.com/Rexeh/joystick-diagrams-dcs-world-plugin"
 Host = "https://github.com/Rexeh/joystick-diagrams"
 
 [project.optional-dependencies]
-# Dev/test only. The host package provides the `joystick_diagrams` SDK the plugin imports
-# (joystick_diagrams.input.*, plugin_interface, plugin_settings) plus `cryptography` for signing.
+# Dev/test tooling. The host package (which provides the `joystick_diagrams` SDK the plugin
+# imports) is installed separately — see README / the CI workflow — because a git direct
+# reference here would require tool.hatch.metadata.allow-direct-references and couples the
+# package metadata to a moving branch ref.
 dev = [
     "pytest>=7.2.0,<8",
     "pytest-cov>=4.0.0,<5",
     "ruff>=0.15.0",
-    "joystick-diagrams @ git+https://github.com/Rexeh/joystick-diagrams@master",
 ]
 
 [build-system]
