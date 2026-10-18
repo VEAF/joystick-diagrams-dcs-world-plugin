@@ -7,6 +7,7 @@ from joystick_diagrams.plugins.plugin_interface import PluginInterface
 from joystick_diagrams.plugins.plugin_settings import PluginMeta, PluginSettings
 
 from .dcs_world import DCSWorldParser
+from .effective_bindings import detect_dcs_install_dir
 
 
 class DCSSettings(PluginSettings):
@@ -16,6 +17,16 @@ class DCSSettings(PluginSettings):
         json_schema_extra={
             "is_folder": True,
             "default_path": "~/Saved Games",
+        },
+    )
+    dcs_install_dir: Path | None = Field(
+        default_factory=detect_dcs_install_dir,
+        title="DCS Install Directory",
+        description="Folder of the DCS World game (the one holding bin/luae.exe), detected from the registry. Needed to show the module default bindings, not only your changes; leave empty to show your changes only.",
+        json_schema_extra={
+            "is_folder": True,
+            "required": False,
+            "default_path": "C:/Program Files/Eagle Dynamics",
         },
     )
     remove_easy_modes: bool = Field(
@@ -48,7 +59,9 @@ class ParserPlugin(PluginInterface):
         if game_dir and Path(game_dir).exists():
             try:
                 self.instance = DCSWorldParser(
-                    game_dir, easy_modes=self.get_setting("remove_easy_modes")
+                    game_dir,
+                    easy_modes=self.get_setting("remove_easy_modes"),
+                    install_dir=self.get_setting("dcs_install_dir"),
                 )
             except (FileNotFoundError, FileExistsError):
                 self.instance = None

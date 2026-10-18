@@ -1,0 +1,1 @@
+-- Presence of this hook enables the Quaggles Input Command Injector; its content is not read.

@@ -18,11 +18,29 @@ dcs_world_plugin/     # the importable plugin package — this folder is what sh
   main.py             # ParserPlugin entry point + DCSSettings
   dcs_world.py        # DCSWorldParser core logic
   dcs_world_yacc.py   # PLY grammar
+  effective_bindings.py  # runs lua/effective_bindings.lua with DCS's own Lua interpreter
+  lua/effective_bindings.lua  # module defaults + user diffs, as DCS computes them
   lextab.py           # generated PLY lexer table
   img/dcs.ico
 tests/                # standalone tests + DCS fixtures
 scripts/sign_plugin.py
 ```
+
+## Effective bindings
+
+A `.diff.lua` file in `Saved Games/DCS/Config/Input/<profile>/joystick/` only holds the user's changes against the module's defaults.
+When the **DCS Install Directory** setting is set (it is detected from `HKCU\Software\Eagle Dynamics\DCS World*\Path`), the plugin shows the bindings DCS actually uses:
+
+- the module's default bindings (`<module>/Input/<profile>/joystick/default.lua`, or the device template such as `Throttle - HOTAS Warthog.lua`; modules of the install and of `Saved Games/DCS/Mods/aircraft`), with the user's diff applied: removed defaults disappear, changed and added bindings appear;
+- the current command names, not the ones stored in the diff when it was written;
+- commands added by the [Quaggles Input Command Injector](https://github.com/Quaggles/dcs-input-command-injector), when its hook is installed;
+- every command bound to an input, joined with ` / ` (DCS allows several).
+
+`lua/effective_bindings.lua` reproduces `DCS World/Scripts/Input/Data.lua`. The default profiles are Lua programs, so the plugin runs it with `DCS World/bin/luae.exe`, the standalone Lua 5.1 interpreter DCS ships: no extra dependency, and command hashes are computed exactly as in the game.
+The script and its input (paths, directory listings) go through stdin in UTF-8, because `luae.exe` cannot take a non-ASCII path on its command line.
+Engine command numbers (`iCommand*`) live in the DCS executable; the script learns them from every diff of the install and of Saved Games (by command name), and the value most diffs agree on wins.
+
+Without an install directory (leave the setting empty to get the old behaviour), for a profile whose module is not installed, or for a device DCS has no default profile for, the plugin falls back to reading the `added` entries of the diffs, and logs a warning.
 
 ## How it loads in the host
 
@@ -43,6 +61,8 @@ pip install -e ".[dev]"
 pytest tests/
 ruff check .
 ```
+
+The effective-bindings tests need a Lua 5.1 interpreter: `DCS_TEST_LUA` (e.g. `"C:/Program Files/Eagle Dynamics/DCS World/bin/luae.exe"` or `lua5.1`), else `lua5.1` / `lua` 5.1 on the `PATH`; they are skipped when none is found.
 
 ## Releasing
 
