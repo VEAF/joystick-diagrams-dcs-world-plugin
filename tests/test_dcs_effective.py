@@ -16,6 +16,7 @@ import pytest
 
 import dcs_world_plugin.effective_bindings as effective
 from dcs_world_plugin.dcs_world import DCSWorldParser
+from joystick_diagrams.input.button import Button
 from joystick_diagrams.input.device import Device_
 
 ROOT = Path("tests/data/dcs_world/effective_install")
@@ -233,6 +234,24 @@ def test_parser_shows_every_command_of_a_shared_input(lua):
     collection = parse(lua, INSTALL, ["FakePlane"])
     inputs = device_of(collection, "FakePlane", STICK).get_combined_inputs()
     assert inputs["BUTTON_6"].command == "Gun Trigger / Sensor Select"
+
+
+def test_parser_shows_a_released_switch_on_its_button(lua):
+    collection = parse(lua, INSTALL, ["FakePlane"])
+    inputs = device_of(collection, "FakePlane", STICK).get_combined_inputs()
+    assert inputs["BUTTON_8"].command == "Gear Up / Gear Down (OFF)"
+
+
+def test_released_switch_in_diff_only_parsing():
+    parser = DCSWorldParser(SAVED_GAMES)
+    assert parser.convert_button_format("JOY_BTN17_OFF") == Button(17)
+    collection = parser.process_profiles(["MissingPlane"])
+    inputs = device_of(collection, "MissingPlane", STICK).get_combined_inputs()
+    # both positions of the switch, whatever their order in the diff
+    assert sorted(inputs["BUTTON_9"].command.split(" / ")) == [
+        "Switch Pressed",
+        "Switch Released (OFF)",
+    ]
 
 
 def test_parser_ignores_keyboard_keys_in_joystick_profiles(lua):
